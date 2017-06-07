@@ -5,11 +5,11 @@ import datetime
 import argparse
 import netaddr
 import sys
-#import logging
+import logging
 import mysql.connector
 from scapy.all import *
 from pprint import pprint
-#from logging.handlers import RotatingFileHandler
+from logging.handlers import RotatingFileHandler
 
 
 
@@ -30,37 +30,37 @@ def build_packet_callback(time_fmt, logger, delimiter, mac_info, ssid, rssi):
 			return
 
 		# list of output fields
-		#fields = []
+		fields = []
 
 		# determine preferred time format 
 		log_time = str(int(time.time()))
 		if time_fmt == 'iso':
 			log_time = datetime.datetime.now().isoformat()
 
-		#fields.append(log_time)
+		fields.append(log_time)
 
 		# append the mac address itself
-		#fields.append(packet.addr2)
+		fields.append(packet.addr2)
 
 		# parse mac address and look up the organization from the vendor octets
 		if mac_info:
 			try:
 				parsed_mac = netaddr.EUI(packet.addr2)
-				#fields.append(parsed_mac.oui.registration().org)
+				fields.append(parsed_mac.oui.registration().org)
 				orga = parsed_mac.oui.registration().org
 			except netaddr.core.NotRegisteredError, e:
-				#fields.append('UNKNOWN')
+				fields.append('UNKNOWN')
 				orga = parsed_mac.oui.registration().org
 
 		# include the SSID in the probe frame
 		if ssid:
-			#fields.append(packet.info)
+			fields.append(packet.info)
 			
 		if rssi:
 			rssi_val = -(256-ord(packet.notdecoded[-4:-3]))
-			#fields.append(str(rssi_val))
+			fields.append(str(rssi_val))
 
-		# logger.info(delimiter.join(fields))
+		logger.info(delimiter.join(fields))
 		
 		# ajout BDD
 		device = (log_time, packet.addr2, org, str(rssi_val), packet.info )
@@ -81,6 +81,7 @@ def main():
 	parser.add_argument('-r', '--rssi', action='store_true', help="include rssi in output")
 	parser.add_argument('-D', '--debug', action='store_true', help="enable debug output")
 	parser.add_argument('-l', '--log', action='store_true', help="enable scrolling live view of the logfile")
+	parser.add_argument('-m', '--mysql', help"save into mysql")
 	args = parser.parse_args()
 
 	if not args.interface:
@@ -100,8 +101,9 @@ def main():
 		args.delimiter, args.mac_info, args.ssid, args.rssi)
 	
 	# connection BDD
-	conn = mysql.connector.connect(host="localhost",user="root",password="XXX", database="proberequest")
-	cursor = conn.cursor()
+	if args.mysql:
+		conn = mysql.connector.connect(host="localhost",user="root",password="XXX", database="proberequest")
+		cursor = conn.cursor()
 	
 	# tracking
 	sniff(iface=args.interface, prn=built_packet_cb, store=0)
