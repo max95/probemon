@@ -6,9 +6,11 @@ import argparse
 import netaddr
 import sys
 import logging
+import mysql.connector
 from scapy.all import *
 from pprint import pprint
 from logging.handlers import RotatingFileHandler
+
 
 
 NAME = 'probemon'
