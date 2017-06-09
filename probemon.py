@@ -73,19 +73,14 @@ def build_packet_callback(time_fmt, logger, delimiter, mac_info, ssid, rssi, mys
 				print "Erreur connection Mysql"
  			else:
 				cur = db.cursor()
-				#device =(log_time, packet.addr2, orga, str(rssi_val), packet.info)
-				requete="insert into tracking (date, mac, organisation, ssid) values (%s,%s,%s,%s)"				
-				#print device
+				requete="insert into proberequest (date, source, ap, organisation, ssid) values (%s,%s,%s,%s,%s)"
 				try:
-					cur.execute(requete, (log_time, packet.addr2, orga, packet.info))
-					#cursor.execute("""INSERT INTO tracking (date, mac, organisation, signal, ssid) VALUES(?,?,?,?,?)""",(log_time,packet.addr2, orga, str(rssi_val),packet.info))
+					cur.execute(requete, (log_time, packet.addr2, packet.addr3, orga, packet.info))
 				except Exception:
 					print "Erreur avec la requete"
 				else:
-					print "Requete executee"
 					db.commit()
 					db.close()
-					print "Base fermee"
 
 	return packet_callback
 

@@ -1,13 +1,13 @@
 USE tracking;
 
-DROP TABLE IF EXISTS `tracking`;
+DROP TABLE IF EXISTS `proberequest`;
 
-CREATE TABLE `tracking` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `date` int(10),
-  `mac` varchar(17),
+CREATE TABLE `proberequest` (
+  `date` int(10) NOT NULL,
+  `source` varchar(17) NOT NULL,
+  `ap` varchar(17) NOT NULL,
   `organisation` varchar(50),
   `signal` int,
   `ssid` varchar(32),
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`date`,`source`,`ap`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
