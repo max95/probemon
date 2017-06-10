@@ -7,13 +7,10 @@ import argparse
 import netaddr
 import sys
 import logging
-#import mysql.connector
 import MySQLdb
 from scapy.all import *
 from pprint import pprint
 from logging.handlers import RotatingFileHandler
-
-#test
 
 NAME = 'probemon'
 DESCRIPTION = "a command line tool for logging 802.11 probe request frames"
@@ -22,7 +19,6 @@ DEBUG = False
 
 def build_packet_callback(time_fmt, logger, delimiter, mac_info, ssid, rssi, mysql):
 	def packet_callback(packet):
-		
 		if not packet.haslayer(Dot11):
 			return
 
@@ -34,7 +30,7 @@ def build_packet_callback(time_fmt, logger, delimiter, mac_info, ssid, rssi, mys
 		# list of output fields
 		fields = []
 
-		# determine preferred time format 
+		# determine preferred time format
 		log_time = str(int(time.time()))
 		if time_fmt == 'iso':
 			log_time = datetime.datetime.now().isoformat()
@@ -57,13 +53,12 @@ def build_packet_callback(time_fmt, logger, delimiter, mac_info, ssid, rssi, mys
 		# include the SSID in the probe frame
 		if ssid:
 			fields.append(packet.info)
-			
+
 		if rssi:
 			rssi_val = -(256-ord(packet.notdecoded[-4:-3]))
 			fields.append(str(rssi_val))
 
-		logger.info(delimiter.join(fields))
-		
+
 		# ajout BDD
 		# connection BDD
 		if mysql:
@@ -81,6 +76,8 @@ def build_packet_callback(time_fmt, logger, delimiter, mac_info, ssid, rssi, mys
 				else:
 					db.commit()
 					db.close()
+		else:
+			logger.info(delimiter.join(fields))
 
 	return packet_callback
 
