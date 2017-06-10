@@ -5,9 +5,8 @@ DROP TABLE IF EXISTS `proberequest`;
 CREATE TABLE `proberequest` (
   `date` int(10) NOT NULL,
   `source` varchar(17) NOT NULL,
-  `ap` varchar(17) NOT NULL,
-  `organisation` varchar(50),
-  `signal` int,
+  `firm` varchar(50),
+  `rssi` int,
   `ssid` varchar(32),
-  PRIMARY KEY (`date`,`source`,`ap`)
+  PRIMARY KEY (`date`,`source`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;

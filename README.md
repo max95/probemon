@@ -7,7 +7,7 @@ I decided to build this simple python script using scapy so that I could record 
 
 ```
 usage: probemon.py [-h] [-i INTERFACE] [-t TIME] [-o OUTPUT] [-b MAX_BYTES]
-                   [-c MAX_BACKUPS] [-d DELIMITER] [-f] [-s]
+                   [-c MAX_BACKUPS] [-d DELIMITER] [-f] [-s] [-m]
 
 a command line tool for logging 802.11 probe request frames
 
@@ -27,5 +27,10 @@ optional arguments:
   -f, --mac-info        include MAC address manufacturer
   -s, --ssid            include probe SSID in output
   -l, --log             enable live scrolling view of the logfile
-```
+``-m, --mysql		write logs in a DataBase
 
+## DataBase Mysql
+To create a Database, use file the file called "createDB.sql"
+Edit this file for change "login" and "password"
+
+Enable live scrolling view of the logfile is not compatible with the use of Mysql
