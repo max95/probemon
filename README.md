@@ -27,8 +27,8 @@ optional arguments:
   -f, --mac-info        include MAC address manufacturer
   -s, --ssid            include probe SSID in output
   -l, --log             enable live scrolling view of the logfile
-``-m, --mysql		write logs in a DataBase
-
+  -m, --mysql		write logs in a DataBase
+```
 ## DataBase Mysql
 To create a Database, use file the file called "createDB.sql"
 Edit this file for change "login" and "password"
