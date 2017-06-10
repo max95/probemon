@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
 import time
 import datetime
@@ -6,19 +7,18 @@ import argparse
 import netaddr
 import sys
 import logging
+import MySQLdb
 from scapy.all import *
 from pprint import pprint
 from logging.handlers import RotatingFileHandler
-
 
 NAME = 'probemon'
 DESCRIPTION = "a command line tool for logging 802.11 probe request frames"
 
 DEBUG = False
 
-def build_packet_callback(time_fmt, logger, delimiter, mac_info, ssid, rssi):
+def build_packet_callback(time_fmt, logger, delimiter, mac_info, ssid, rssi, mysql):
 	def packet_callback(packet):
-		
 		if not packet.haslayer(Dot11):
 			return
 
@@ -30,7 +30,7 @@ def build_packet_callback(time_fmt, logger, delimiter, mac_info, ssid, rssi):
 		# list of output fields
 		fields = []
 
-		# determine preferred time format 
+		# determine preferred time format
 		log_time = str(int(time.time()))
 		if time_fmt == 'iso':
 			log_time = datetime.datetime.now().isoformat()
@@ -45,18 +45,39 @@ def build_packet_callback(time_fmt, logger, delimiter, mac_info, ssid, rssi):
 			try:
 				parsed_mac = netaddr.EUI(packet.addr2)
 				fields.append(parsed_mac.oui.registration().org)
+				orga = parsed_mac.oui.registration().org
 			except netaddr.core.NotRegisteredError, e:
 				fields.append('UNKNOWN')
+				orga = "UNKNOWN"
 
 		# include the SSID in the probe frame
 		if ssid:
 			fields.append(packet.info)
-			
+
 		if rssi:
 			rssi_val = -(256-ord(packet.notdecoded[-4:-3]))
 			fields.append(str(rssi_val))
 
-		logger.info(delimiter.join(fields))
+
+		# ajout BDD
+		# connection BDD
+		if mysql:
+			try:
+				db = MySQLdb.connect(host="localhost",user="root",passwd="toor", db="tracking")
+			except Exception:
+				print "Erreur connection Mysql"
+ 			else:
+				cur = db.cursor()
+				requete="insert into proberequest (date, source, firm, rssi ,ssid) values (%s,%s,%s,%s,%s)"
+				try:
+					cur.execute(requete, (log_time, packet.addr2, orga, str(rssi_val), packet.info))
+				except Exception:
+					db.close()
+				else:
+					db.commit()
+					db.close()
+		else:
+			logger.info(delimiter.join(fields))
 
 	return packet_callback
 
@@ -73,6 +94,7 @@ def main():
 	parser.add_argument('-r', '--rssi', action='store_true', help="include rssi in output")
 	parser.add_argument('-D', '--debug', action='store_true', help="enable debug output")
 	parser.add_argument('-l', '--log', action='store_true', help="enable scrolling live view of the logfile")
+	parser.add_argument('-m', '--mysql',action='store_true', help="save into mysql")
 	args = parser.parse_args()
 
 	if not args.interface:
@@ -89,8 +111,14 @@ def main():
 	if args.log:
 		logger.addHandler(logging.StreamHandler(sys.stdout))
 	built_packet_cb = build_packet_callback(args.time, logger, 
-		args.delimiter, args.mac_info, args.ssid, args.rssi)
+		args.delimiter, args.mac_info, args.ssid, args.rssi, args.mysql)
+	
+	
+	# tracking
 	sniff(iface=args.interface, prn=built_packet_cb, store=0)
+	
+	# fermeture BDD
+	conn.close()
 
 if __name__ == '__main__':
 	main()
