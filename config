@@ -1,0 +1,6 @@
+#config mysql
+host=localhost
+login=login_mysql
+passwd=password_mysql
+db=name_database
+table=name_table

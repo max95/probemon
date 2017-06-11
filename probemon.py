@@ -8,6 +8,7 @@ import netaddr
 import sys
 import logging
 import MySQLdb
+import string
 from scapy.all import *
 from pprint import pprint
 from logging.handlers import RotatingFileHandler
@@ -18,6 +19,14 @@ DESCRIPTION = "a command line tool for logging 802.11 probe request frames"
 DEBUG = False
 
 def build_packet_callback(time_fmt, logger, delimiter, mac_info, ssid, rssi, mysql):
+	# read file "config" for login, passwd,...
+	flux = open( "config" ).readlines()
+	lines = [ l.strip().split("=") for l in flux if not l.startswith("#")]
+	dico_cfg = {}
+	for l in lines:
+		#la clef c'est le terme de gauche, la valeur celui de droite
+		dico_cfg[ l[0] ] = l[1]
+
 	def packet_callback(packet):
 		if not packet.haslayer(Dot11):
 			return
@@ -63,14 +72,15 @@ def build_packet_callback(time_fmt, logger, delimiter, mac_info, ssid, rssi, mys
 		# connection BDD
 		if mysql:
 			try:
-				db = MySQLdb.connect(host="localhost",user="root",passwd="toor", db="tracking")
+				db = MySQLdb.connect(host=dico_cfg["host"],user=dico_cfg["login"],passwd=dico_cfg["passwd"], db=dico_cfg["db"])
 			except Exception:
 				print "Erreur connection Mysql"
  			else:
 				cur = db.cursor()
-				requete="insert into proberequest (date, source, firm, rssi ,ssid) values (%s,%s,%s,%s,%s)"
+				requete='insert into '+dico_cfg['table']+' (date, source, firm, rssi ,ssid) values (%s,%s,%s,%s,%s)'
+				table = dico_cfg["table"]
 				try:
-					cur.execute(requete, (log_time, packet.addr2, orga, str(rssi_val), packet.info))
+					cur.execute (requete, (log_time, packet.addr2, orga, str(rssi_val), packet.info))
 				except Exception:
 					db.close()
 				else:
@@ -78,7 +88,6 @@ def build_packet_callback(time_fmt, logger, delimiter, mac_info, ssid, rssi, mys
 					db.close()
 		else:
 			logger.info(delimiter.join(fields))
-
 	return packet_callback
 
 def main():
@@ -113,7 +122,7 @@ def main():
 	built_packet_cb = build_packet_callback(args.time, logger, 
 		args.delimiter, args.mac_info, args.ssid, args.rssi, args.mysql)
 	
-	
+
 	# tracking
 	sniff(iface=args.interface, prn=built_packet_cb, store=0)
 	
